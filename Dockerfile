@@ -7,11 +7,12 @@ WORKDIR /var/www/html
 COPY index.php /var/www/html/
 COPY webhook.php /var/www/html/
 COPY api.php /var/www/html/
-COPY config.json /var/www/html/
 COPY assets/ /var/www/html/assets/
 
 RUN touch /var/www/html/mensagens.json \
     && touch /var/www/html/webhook_log.json \
+    && touch /var/www/html/config.json \
+    && echo '{"evolution_url":"https://sua-evolution-api.com","evolution_apikey":"SUA_API_KEY_AQUI","evolution_instance":"NOME_DA_INSTANCIA"}' > /var/www/html/config.json \
     && chmod 666 /var/www/html/mensagens.json \
     && chmod 666 /var/www/html/webhook_log.json \
     && chmod 666 /var/www/html/config.json \
