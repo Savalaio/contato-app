@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0b141a;
+  color: #e9edef;
+}
+
+header {
+  background: #202c33;
+  padding: 15px;
+  text-align: center;
+  font-size: 1.2em;
+}
+
+main {
+  padding: 15px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.msg {
+  background: #005c4b;
+  margin-bottom: 12px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  max-width: 75%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.nome {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #9de1fe;
+}
+
+.texto {
+  font-size: 1em;
+}
+
+.hora {
+  text-align: right;
+  font-size: 0.75em;
+  opacity: 0.7;
+  margin-top: 6px;
+}
