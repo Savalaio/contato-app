@@ -1,45 +1,294 @@
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: #0b141a;
   color: #e9edef;
+  height: 100vh;
+  overflow: hidden;
 }
 
-header {
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 350px;
+  background: #111b21;
+  border-right: 1px solid #2a3942;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
   background: #202c33;
-  padding: 15px;
-  text-align: center;
-  font-size: 1.2em;
+  padding: 20px;
+  border-bottom: 1px solid #2a3942;
 }
 
-main {
-  padding: 15px;
-  height: calc(100vh - 60px);
+.sidebar-header h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.3em;
+}
+
+.status-info {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+.conversas-list {
+  flex: 1;
   overflow-y: auto;
 }
 
-.msg {
-  background: #005c4b;
-  margin-bottom: 12px;
-  padding: 12px 15px;
-  border-radius: 8px;
-  max-width: 75%;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+.conversa-item {
+  padding: 15px 20px;
+  border-bottom: 1px solid #2a3942;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
 }
 
-.nome {
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #9de1fe;
+.conversa-item:hover {
+  background: #202c33;
+}
+
+.conversa-item.ativa {
+  background: #2a3942;
+}
+
+.conversa-info {
+  margin-bottom: 8px;
+}
+
+.conversa-nome {
+  font-weight: 600;
+  font-size: 1em;
+  margin-bottom: 3px;
+}
+
+.conversa-telefone {
+  font-size: 0.85em;
+  opacity: 0.6;
+}
+
+.conversa-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ultima-msg {
+  font-size: 0.9em;
+  opacity: 0.7;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ultima-hora {
+  font-size: 0.8em;
+  opacity: 0.5;
+  margin-left: 10px;
+}
+
+.conversa-badge {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: #005c4b;
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.75em;
+  font-weight: 600;
+}
+
+.empty-conversas {
+  padding: 40px 20px;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.chat-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0b141a;
+}
+
+.chat-header {
+  background: #202c33;
+  padding: 15px 20px;
+  border-bottom: 1px solid #2a3942;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#cliente-info h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.1em;
+}
+
+#cliente-telefone {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+.chat-actions button {
+  background: #005c4b;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background 0.2s;
+}
+
+.chat-actions button:hover {
+  background: #017561;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background-image: 
+    linear-gradient(rgba(11, 20, 26, 0.9), rgba(11, 20, 26, 0.9)),
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23182229" width="100" height="100"/><circle fill="%231a252d" cx="50" cy="50" r="1"/></svg>');
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 1.2em;
+  opacity: 0.5;
+}
+
+.msg {
+  margin-bottom: 12px;
+  display: flex;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg-recebida {
+  justify-content: flex-start;
+}
+
+.msg-enviada {
+  justify-content: flex-end;
+}
+
+.msg-content {
+  max-width: 65%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.msg-recebida .msg-content {
+  background: #202c33;
+}
+
+.msg-enviada .msg-content {
+  background: #005c4b;
 }
 
 .texto {
-  font-size: 1em;
+  font-size: 0.95em;
+  line-height: 1.4;
+  word-wrap: break-word;
 }
 
 .hora {
   text-align: right;
-  font-size: 0.75em;
-  opacity: 0.7;
-  margin-top: 6px;
+  font-size: 0.7em;
+  opacity: 0.6;
+  margin-top: 5px;
+}
+
+.chat-footer {
+  background: #202c33;
+  padding: 15px 20px;
+  border-top: 1px solid #2a3942;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+}
+
+#mensagem-input {
+  flex: 1;
+  background: #2a3942;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #e9edef;
+  font-size: 0.95em;
+  outline: none;
+}
+
+#mensagem-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#mensagem-input::placeholder {
+  color: #667781;
+}
+
+#btn-enviar {
+  background: #00a884;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+#btn-enviar:hover:not(:disabled) {
+  background: #06cf9c;
+}
+
+#btn-enviar:disabled {
+  background: #2a3942;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b141a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a3942;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374850;
 }

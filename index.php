@@ -1,70 +1,195 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Atendimento</title>
+    <title>Sistema de Atendimento WhatsApp</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
+
 <body>
 
-    <header>
-        <h1>📲 Atendimento WhatsApp</h1>
-    </header>
+    <div class="container">
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h2>📱 Atendimentos</h2>
+                <div class="status-info">
+                    <span id="total-conversas">0</span> conversas
+                </div>
+            </header>
+            <div id="lista-conversas" class="conversas-list"></div>
+        </aside>
 
-    <main id="chat"></main>
+        <main class="chat-area">
+            <header class="chat-header">
+                <div id="cliente-info">
+                    <h3 id="cliente-nome">Selecione uma conversa</h3>
+                    <span id="cliente-telefone"></span>
+                </div>
+                <div class="chat-actions">
+                    <button id="btn-atualizar" onclick="carregarDados()">🔄 Atualizar</button>
+                </div>
+            </header>
+            
+            <div id="chat" class="chat-messages">
+                <div class="empty-state">
+                    <p>👈 Selecione uma conversa para começar</p>
+                </div>
+            </div>
+
+            <footer class="chat-footer">
+                <div class="input-area">
+                    <input type="text" id="mensagem-input" placeholder="Digite sua mensagem..." disabled>
+                    <button id="btn-enviar" onclick="enviarMensagem()" disabled>Enviar</button>
+                </div>
+            </footer>
+        </main>
+    </div>
 
     <script>
-    async function carregarMensagens() {
+    let conversas = {};
+    let conversaAtiva = null;
+
+    async function carregarDados() {
         try {
-            // O timestamp (?_=) evita que o navegador use uma versão antiga (cache) do arquivo
-            const res = await fetch('mensagens.json?_=' + Date.now());
+            const res = await fetch('api.php?action=conversas&_=' + Date.now());
             
             if (!res.ok) {
-                console.log("Arquivo de mensagens ainda não foi criado.");
+                console.log("Erro ao carregar conversas");
                 return;
             }
 
-            const textoBruto = await res.text();
+            const dados = await res.json();
+            conversas = dados;
             
-            // Verifica se o arquivo está vazio ou contém apenas um array vazio
-            if (!textoBruto || textoBruto.trim() === "" || textoBruto === "[]") {
-                console.log("Histórico vazio. Aguardando mensagens...");
-                return;
+            atualizarListaConversas();
+            
+            if (conversaAtiva) {
+                atualizarChatAtivo();
             }
-
-            const dados = JSON.parse(textoBruto);
-            const chat = document.getElementById('chat');
-            
-            // Limpa o chat antes de reconstruir para evitar duplicatas
-            chat.innerHTML = '';
-
-            dados.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'msg';
-
-                div.innerHTML = `
-                    <div class="nome">${msg.nome || 'Cliente'}</div>
-                    <div class="texto">${msg.mensagem}</div>
-                    <div class="hora">${msg.hora}</div>
-                `;
-                chat.appendChild(div);
-            });
-
-            // Mantém o scroll sempre no final das mensagens
-            chat.scrollTop = chat.scrollHeight;
 
         } catch (e) {
-            console.error("Erro ao carregar ou processar mensagens:", e);
+            console.error("Erro ao carregar dados:", e);
         }
     }
 
-    // Tenta carregar novas mensagens a cada 2 segundos
-    setInterval(carregarMensagens, 2000);
-    
-    // Executa uma carga inicial assim que a página abre
-    carregarMensagens();
+    function atualizarListaConversas() {
+        const lista = document.getElementById('lista-conversas');
+        lista.innerHTML = '';
+
+        const telefones = Object.keys(conversas);
+        document.getElementById('total-conversas').textContent = telefones.length;
+
+        if (telefones.length === 0) {
+            lista.innerHTML = '<div class="empty-conversas">Nenhuma conversa ainda</div>';
+            return;
+        }
+
+        telefones.forEach(telefone => {
+            const conversa = conversas[telefone];
+            const ultimaMsg = conversa.mensagens[conversa.mensagens.length - 1];
+            
+            const div = document.createElement('div');
+            div.className = 'conversa-item' + (telefone === conversaAtiva ? ' ativa' : '');
+            div.onclick = () => selecionarConversa(telefone);
+            
+            div.innerHTML = `
+                <div class="conversa-info">
+                    <div class="conversa-nome">${conversa.nome}</div>
+                    <div class="conversa-telefone">${telefone}</div>
+                </div>
+                <div class="conversa-preview">
+                    <div class="ultima-msg">${ultimaMsg.mensagem.substring(0, 50)}...</div>
+                    <div class="ultima-hora">${ultimaMsg.hora}</div>
+                </div>
+                <div class="conversa-badge">${conversa.mensagens.length}</div>
+            `;
+            
+            lista.appendChild(div);
+        });
+    }
+
+    function selecionarConversa(telefone) {
+        conversaAtiva = telefone;
+        document.getElementById('mensagem-input').disabled = false;
+        document.getElementById('btn-enviar').disabled = false;
+        
+        atualizarChatAtivo();
+        atualizarListaConversas();
+    }
+
+    function atualizarChatAtivo() {
+        if (!conversaAtiva || !conversas[conversaAtiva]) return;
+
+        const conversa = conversas[conversaAtiva];
+        const chat = document.getElementById('chat');
+        
+        document.getElementById('cliente-nome').textContent = conversa.nome;
+        document.getElementById('cliente-telefone').textContent = conversaAtiva;
+        
+        chat.innerHTML = '';
+        
+        conversa.mensagens.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = 'msg ' + (msg.fromMe ? 'msg-enviada' : 'msg-recebida');
+            
+            div.innerHTML = `
+                <div class="msg-content">
+                    <div class="texto">${msg.mensagem}</div>
+                    <div class="hora">${msg.hora}</div>
+                </div>
+            `;
+            chat.appendChild(div);
+        });
+        
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function enviarMensagem() {
+        if (!conversaAtiva) return;
+        
+        const input = document.getElementById('mensagem-input');
+        const mensagem = input.value.trim();
+        
+        if (!mensagem) return;
+        
+        try {
+            const res = await fetch('api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'enviar',
+                    telefone: conversaAtiva,
+                    mensagem: mensagem
+                })
+            });
+            
+            const resultado = await res.json();
+            
+            if (resultado.success) {
+                input.value = '';
+                carregarDados();
+            } else {
+                alert('Erro ao enviar: ' + resultado.error);
+            }
+            
+        } catch (e) {
+            console.error("Erro ao enviar mensagem:", e);
+            alert('Erro ao enviar mensagem');
+        }
+    }
+
+    document.getElementById('mensagem-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            enviarMensagem();
+        }
+    });
+
+    setInterval(carregarDados, 3000);
+    carregarDados();
     </script>
 
 </body>
+
 </html>

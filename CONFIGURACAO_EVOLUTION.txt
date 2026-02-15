@@ -1,0 +1,125 @@
+═══════════════════════════════════════════════════════════════
+  CONFIGURAÇÃO DO WEBHOOK NO EVOLUTION API
+═══════════════════════════════════════════════════════════════
+
+1. CONFIGURAÇÃO NO EVOLUTION API
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Endpoint do Webhook:
+   Local: http://localhost:8081/webhook.php
+   Produção: https://seu-dominio.com/webhook.php
+
+Eventos para ativar:
+   ✓ MESSAGES_UPSERT (receber mensagens)
+   ✓ MESSAGES_UPDATE (atualizações de mensagens)
+
+Headers recomendados:
+   Content-Type: application/json
+
+
+2. EXEMPLO DE CURL PARA CONFIGURAR WEBHOOK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+curl -X POST "https://sua-evolution-api.com/webhook/set/SUA_INSTANCIA" \
+  -H "Content-Type: application/json" \
+  -H "apikey: SUA_API_KEY" \
+  -d '{
+    "url": "http://localhost:8081/webhook.php",
+    "webhook_by_events": true,
+    "events": [
+      "MESSAGES_UPSERT"
+    ],
+    "webhook_base64": false
+  }'
+
+
+3. TIPOS DE MENSAGENS SUPORTADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Texto simples
+✓ Texto com formatação
+✓ Imagens (com ou sem legenda)
+✓ Vídeos (com ou sem legenda)
+✓ Áudios
+✓ Documentos
+✓ Localização
+✓ Contatos
+
+
+4. TESTAR WEBHOOK LOCALMENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+curl -X POST http://localhost:8081/webhook.php \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "messages.upsert",
+    "data": {
+      "key": {
+        "remoteJid": "5511999999999@s.whatsapp.net",
+        "fromMe": false
+      },
+      "pushName": "Cliente Teste",
+      "message": {
+        "conversation": "Olá, esta é uma mensagem de teste!"
+      }
+    }
+  }'
+
+
+5. LOGS E DEPURAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Todas as requisições são registradas em:
+   webhook_log.json
+
+Para visualizar os logs:
+   cat webhook_log.json
+   ou
+   type webhook_log.json (Windows)
+
+
+6. ESTRUTURA DO PAYLOAD DO EVOLUTION API
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{
+  "event": "messages.upsert",
+  "instance": "nome_da_instancia",
+  "data": {
+    "key": {
+      "remoteJid": "5511999999999@s.whatsapp.net",
+      "fromMe": false,
+      "id": "mensagem_id"
+    },
+    "pushName": "Nome do Cliente",
+    "message": {
+      "conversation": "Texto da mensagem"
+    },
+    "messageTimestamp": 1234567890
+  }
+}
+
+
+7. DEPLOY NO EASYPANEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. No Easypanel, crie um novo App
+2. Selecione "Docker" como source
+3. Use o Dockerfile incluído no projeto
+4. Configure a porta 8080
+5. Após o deploy, configure o webhook no Evolution API
+   com a URL pública gerada pelo Easypanel
+
+
+8. VARIÁVEIS DE AMBIENTE (OPCIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para maior segurança, você pode adicionar autenticação:
+
+No Evolution API, adicione header:
+   X-Webhook-Token: seu_token_secreto
+
+No webhook.php, valide:
+   if ($_SERVER['HTTP_X_WEBHOOK_TOKEN'] !== 'seu_token_secreto') {
+       http_response_code(401);
+       exit;
+   }

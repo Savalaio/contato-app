@@ -1,0 +1,163 @@
+═══════════════════════════════════════════════════════════════
+  GUIA DE DEPLOY NO EASYPANEL
+═══════════════════════════════════════════════════════════════
+
+📋 PASSO A PASSO
+
+
+1. PREPARAR O REPOSITÓRIO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Faça commit de todos os arquivos:
+   
+   git add .
+   git commit -m "Sistema de atendimento WhatsApp completo"
+   git push
+
+
+2. CONFIGURAR NO EASYPANEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse seu Easypanel
+2. Clique em "Create" → "App"
+3. Escolha um nome para o app (ex: whatsapp-atendimento)
+4. Selecione "GitHub" como fonte
+5. Conecte seu repositório
+6. Configure:
+
+   Build Type: Dockerfile
+   Dockerfile Path: ./Dockerfile (padrão)
+   Port: 8080
+
+
+3. CONFIGURAR VARIÁVEIS DE AMBIENTE (OPCIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Você pode configurar via variáveis de ambiente em vez de config.json:
+
+EVOLUTION_URL=https://sua-evolution-api.com
+EVOLUTION_APIKEY=sua_api_key_aqui
+EVOLUTION_INSTANCE=nome_da_instancia
+
+
+4. DOMÍNIO E SSL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. No Easypanel, vá em "Domains"
+2. Adicione seu domínio (ex: atendimento.seudominio.com)
+3. Easypanel irá configurar SSL automaticamente
+4. Anote a URL final
+
+
+5. CONFIGURAR EVOLUTION API
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Após o deploy, configure o webhook no Evolution API:
+
+URL do Webhook: https://seu-dominio.com/webhook.php
+
+Eventos:
+- MESSAGES_UPSERT
+
+Método: POST
+Content-Type: application/json
+
+
+6. ATUALIZAR CONFIG.JSON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opção 1 - Via SSH no container:
+   1. Acesse o container via terminal no Easypanel
+   2. Edite: vi /var/www/html/config.json
+   3. Salve as alterações
+
+Opção 2 - Via rebuild:
+   1. Atualize config.json no repositório
+   2. Commit e push
+   3. Rebuild no Easypanel
+
+Opção 3 - Via variáveis de ambiente (recomendado):
+   Modifique api.php para ler de $_ENV primeiro
+
+
+7. VERIFICAR DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Acesse: https://seu-dominio.com
+2. Deve aparecer a interface de atendimento
+3. Envie uma mensagem teste para o número do WhatsApp
+4. A mensagem deve aparecer no painel
+
+
+8. LOGS E MONITORAMENTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No Easypanel:
+- Aba "Logs" para ver logs do container
+- Aba "Metrics" para monitorar uso de recursos
+
+Arquivos de log:
+- webhook_log.json (logs de requisições do webhook)
+- mensagens.json (histórico de mensagens)
+
+
+9. PERSISTÊNCIA DE DADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ IMPORTANTE: Por padrão, os arquivos são perdidos ao reiniciar.
+
+Para persistir dados, configure Volumes no Easypanel:
+
+1. Vá em "Storage" → "Add Volume"
+2. Mount Path: /var/www/html/mensagens.json
+3. Repita para webhook_log.json
+
+
+10. TESTAR INTEGRAÇÃO COMPLETA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Envie mensagem WhatsApp → Deve aparecer no painel
+2. Responda pelo painel → Cliente deve receber
+3. Verifique logs em caso de erro
+
+
+11. TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ Mensagens não chegam no painel:
+   → Verifique webhook no Evolution API
+   → Confira URL do webhook
+   → Veja logs do container
+
+❌ Não consegue enviar mensagens:
+   → Verifique config.json
+   → Teste conexão com Evolution API
+   → Veja se instância está conectada
+
+❌ Erro 502/503:
+   → Container não iniciou
+   → Veja logs no Easypanel
+   → Verifique Dockerfile
+
+
+12. MELHORIAS RECOMENDADAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ Adicionar autenticação (login/senha)
+□ Implementar banco de dados (MySQL/PostgreSQL)
+□ Adicionar notificações de novas mensagens
+□ Implementar múltiplos atendentes
+□ Adicionar sistema de tags/categorias
+□ Estatísticas e relatórios
+□ Backup automático de mensagens
+
+
+═══════════════════════════════════════════════════════════════
+URLs IMPORTANTES APÓS DEPLOY
+═══════════════════════════════════════════════════════════════
+
+Painel: https://seu-dominio.com
+Webhook: https://seu-dominio.com/webhook.php
+API: https://seu-dominio.com/api.php
+
+═══════════════════════════════════════════════════════════════
