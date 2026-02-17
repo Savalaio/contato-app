@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Webhook - Evolution API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #25D366;
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #25D366;
+        }
+        .step h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info-box strong {
+            color: #1976d2;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin: 15px 0 8px 0;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: #25D366;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .result.info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #25D366;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .config-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .badge-conectado {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-desconectado {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🔧 Configurar Webhook</h1>
+        <div class="subtitle">Evolution API - Controle_11</div>
+
+        <div class="step">
+            <h3>📋 Configuração Atual</h3>
+            <div id="config-display" class="config-display">Carregando...</div>
+        </div>
+
+        <div class="step">
+            <h3>🌐 URL do Webhook</h3>
+            <div class="info-box">
+                <strong>⚠️ ATENÇÃO:</strong> A URL precisa ser <strong>pública</strong> e acessível pela Evolution API.<br>
+                Se estiver testando localmente, use ferramentas como <strong>ngrok</strong> ou <strong>localtunnel</strong>.
+            </div>
+            <label>URL completa do webhook.php:</label>
+            <input type="text" id="webhook-url" placeholder="https://seudominio.com/webhook.php">
+        </div>
+
+        <div class="button-group">
+            <button class="btn-secondary" onclick="verificarAtual()">🔍 Ver Atual</button>
+            <button class="btn-primary" onclick="configurar()">✅ Configurar Agora</button>
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            evolution_url: 'https://evo.realizador.com.br',
+            evolution_apikey: '20E12095-CE9F-4F16-9FB5-9DD63690E1B7',
+            evolution_instance: 'Controle_11'
+        };
+
+        window.onload = function() {
+            document.getElementById('config-display').innerHTML = 
+                `<strong>Evolution:</strong> ${CONFIG.evolution_url}\n` +
+                `<strong>Instância:</strong> ${CONFIG.evolution_instance}\n` +
+                `<strong>API Key:</strong> ${CONFIG.evolution_apikey.substring(0, 10)}...`;
+            
+            document.getElementById('webhook-url').value = 'https://contato.realizador.com.br/webhook.php';
+        };
+
+        async function verificarAtual() {
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.className = 'result info';
+            result.innerHTML = '<div class="loading"></div>Verificando webhook atual...';
+
+            try {
+                const res = await fetch(`${CONFIG.evolution_url}/webhook/find/${CONFIG.evolution_instance}`, {
+                    headers: { 'apikey': CONFIG.evolution_apikey }
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.url) {
+                    result.className = 'result info';
+                    result.innerHTML = 
+                        `✅ WEBHOOK CONFIGURADO:\n\n` +
+                        `URL: ${data.url}\n` +
+                        `Events: ${JSON.stringify(data.events, null, 2)}\n` +
+                        `Webhook by Events: ${data.webhook_by_events}\n` +
+                        `Base64: ${data.webhook_base64}`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `❌ NENHUM WEBHOOK CONFIGURADO\n\nVocê precisa configurar o webhook para receber as mensagens.`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = `❌ ERRO: ${e.message}`;
+            }
+        }
+
+        async function configurar() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            
+            if (!webhookUrl) {
+                alert('❌ Por favor, informe a URL do webhook');
+                return;
+            }
+
+            if (!webhookUrl.startsWith('http://') && !webhookUrl.startsWith('https://')) {
+                alert('❌ A URL precisa começar com http:// ou https://');
+                return;
+            }
+
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.className = 'result info';
+            result.innerHTML = '<div class="loading"></div>Configurando webhook...';
+
+            const payload = {
+                url: webhookUrl,
+                webhook_by_events: false,
+                webhook_base64: false,
+                events: [
+                    "MESSAGES_UPSERT"
+                ]
+            };
+
+            try {
+                const res = await fetch(`${CONFIG.evolution_url}/webhook/set/${CONFIG.evolution_instance}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': CONFIG.evolution_apikey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    result.className = 'result success';
+                    result.innerHTML = 
+                        `✅ WEBHOOK CONFIGURADO COM SUCESSO!\n\n` +
+                        `URL: ${webhookUrl}\n` +
+                        `Events: MESSAGES_UPSERT\n\n` +
+                        `📱 PRÓXIMO PASSO:\n` +
+                        `1. Envie uma mensagem de teste para a instância Controle_11\n` +
+                        `2. Abra index.php no navegador\n` +
+                        `3. A conversa deve aparecer automaticamente\n\n` +
+                        `Resposta da API:\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = 
+                        `❌ ERRO AO CONFIGURAR (HTTP ${res.status})\n\n` +
+                        `${JSON.stringify(data, null, 2)}\n\n` +
+                        `Possíveis causas:\n` +
+                        `- URL não está acessível publicamente\n` +
+                        `- API Key inválida\n` +
+                        `- Instância não existe`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = 
+                    `❌ ERRO DE CONEXÃO: ${e.message}\n\n` +
+                    `Verifique:\n` +
+                    `- A Evolution API está rodando?\n` +
+                    `- Você tem acesso à internet?\n` +
+                    `- A URL da Evolution está correta?`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico Evolution API</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #25D366; margin-bottom: 20px; }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .section h2 { font-size: 18px; margin-bottom: 15px; color: #333; }
+        input, button {
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        input {
+            width: 100%;
+            margin: 10px 0;
+        }
+        button {
+            background: #25D366;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background: #128C7E; }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #25D366;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #ff4444;
+            color: #ff4444;
+        }
+        .success {
+            border-left-color: #00C851;
+            color: #00C851;
+        }
+        .info {
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-online { background: #00C851; color: white; }
+        .status-offline { background: #ff4444; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico Evolution API Webhook</h1>
+
+        <div class="section">
+            <h2>Passo 1: Informações do Sistema</h2>
+            <div id="config-info">Carregando configuração...</div>
+        </div>
+
+        <div class="section">
+            <h2>Passo 2: URL do Webhook</h2>
+            <div class="info">
+                <strong>⚠️ IMPORTANTE:</strong> A URL do webhook deve ser pública e acessível pela Evolution API.<br>
+                Exemplo: <code>https://seudominio.com/webhook.php</code> ou <code>http://seu-ip-publico/webhook.php</code>
+            </div>
+            <label>URL do seu webhook:</label>
+            <input type="text" id="webhook-url" placeholder="https://seudominio.com/webhook.php">
+        </div>
+
+        <div class="section">
+            <h2>Passo 3: Testar Conexão</h2>
+            <button onclick="testarConexao()">🔍 Testar Conexão com Evolution</button>
+            <button onclick="verificarWebhook()">📋 Ver Webhook Atual</button>
+            <div id="teste-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>Passo 4: Configurar Webhook</h2>
+            <button onclick="configurarWebhook()" id="btn-configurar">⚙️ Configurar Webhook</button>
+            <div id="config-result" class="result" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>Passo 5: Enviar Mensagem de Teste</h2>
+            <div class="info">
+                Envie uma mensagem para o número conectado na instância <strong id="instance-name"></strong> e clique em "Verificar Log"
+            </div>
+            <button onclick="verificarLog()">📄 Verificar Log de Webhook</button>
+            <div id="log-result" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let config = {};
+
+        async function carregarConfig() {
+            try {
+                const res = await fetch('config.json');
+                config = await res.json();
+                
+                document.getElementById('config-info').innerHTML = `
+                    <strong>Evolution URL:</strong> ${config.evolution_url}<br>
+                    <strong>Instância:</strong> ${config.evolution_instance}<br>
+                    <strong>API Key:</strong> ${config.evolution_apikey.substring(0, 8)}...
+                `;
+                
+                document.getElementById('instance-name').textContent = config.evolution_instance;
+                
+                const urlAtual = window.location.origin + window.location.pathname.replace('diagnostico.html', 'webhook.php');
+                document.getElementById('webhook-url').value = urlAtual;
+                
+            } catch (e) {
+                document.getElementById('config-info').innerHTML = '<span class="error">Erro ao carregar config.json</span>';
+            }
+        }
+
+        async function testarConexao() {
+            const result = document.getElementById('teste-result');
+            result.style.display = 'block';
+            result.innerHTML = 'Testando conexão...';
+            result.className = 'result';
+
+            try {
+                const res = await fetch(`${config.evolution_url}/instance/connectionState/${config.evolution_instance}`, {
+                    headers: { 'apikey': config.evolution_apikey }
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    const status = data.instance?.state || 'unknown';
+                    const badge = status === 'open' ? 'status-online' : 'status-offline';
+                    result.className = 'result success';
+                    result.innerHTML = `✓ Conexão estabelecida!\n\nStatus: <span class="${badge}">${status.toUpperCase()}</span>\n\nResposta:\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `✗ Erro na conexão (HTTP ${res.status})\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = `✗ Erro: ${e.message}\n\nVerifique:\n1. A Evolution API está rodando?\n2. A URL está correta?\n3. A API Key está válida?`;
+            }
+        }
+
+        async function verificarWebhook() {
+            const result = document.getElementById('teste-result');
+            result.style.display = 'block';
+            result.innerHTML = 'Verificando webhook...';
+            result.className = 'result';
+
+            try {
+                const res = await fetch(`${config.evolution_url}/webhook/find/${config.evolution_instance}`, {
+                    headers: { 'apikey': config.evolution_apikey }
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    if (data.url) {
+                        result.className = 'result success';
+                        result.innerHTML = `✓ Webhook encontrado:\n\nURL: ${data.url}\nEvents: ${JSON.stringify(data.events, null, 2)}`;
+                    } else {
+                        result.className = 'result error';
+                        result.innerHTML = `⚠️ Nenhum webhook configurado\n\nResposta:\n${JSON.stringify(data, null, 2)}`;
+                    }
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `✗ Erro (HTTP ${res.status})\n\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = `✗ Erro: ${e.message}`;
+            }
+        }
+
+        async function configurarWebhook() {
+            const webhookUrl = document.getElementById('webhook-url').value.trim();
+            
+            if (!webhookUrl) {
+                alert('Por favor, informe a URL do webhook');
+                return;
+            }
+
+            const result = document.getElementById('config-result');
+            result.style.display = 'block';
+            result.innerHTML = 'Configurando webhook...';
+            result.className = 'result';
+
+            const data = {
+                url: webhookUrl,
+                webhook_by_events: false,
+                webhook_base64: false,
+                events: ["MESSAGES_UPSERT"]
+            };
+
+            try {
+                const res = await fetch(`${config.evolution_url}/webhook/set/${config.evolution_instance}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': config.evolution_apikey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const response = await res.json();
+                
+                if (res.ok) {
+                    result.className = 'result success';
+                    result.innerHTML = `✓ Webhook configurado com sucesso!\n\nURL: ${webhookUrl}\nEvents: MESSAGES_UPSERT\n\nResposta:\n${JSON.stringify(response, null, 2)}\n\n🎯 Próximo passo: Envie uma mensagem de teste para a instância`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `✗ Erro ao configurar (HTTP ${res.status})\n\n${JSON.stringify(response, null, 2)}`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = `✗ Erro: ${e.message}`;
+            }
+        }
+
+        async function verificarLog() {
+            const result = document.getElementById('log-result');
+            result.style.display = 'block';
+            result.innerHTML = 'Verificando log...';
+            result.className = 'result';
+
+            try {
+                const res = await fetch('webhook_log.json?_=' + Date.now());
+                const log = await res.text();
+                
+                if (log && log.trim() !== '' && log.trim() !== 'null') {
+                    result.className = 'result success';
+                    result.innerHTML = `✓ Log encontrado!\n\n${log}\n\n🎉 O webhook está funcionando!`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `⚠️ Log vazio ou sem dados\n\nPossíveis causas:\n1. Webhook não recebeu nenhuma mensagem ainda\n2. URL do webhook não está acessível publicamente\n3. Events não estão configurados corretamente\n\nTente:\n1. Enviar uma mensagem para o número da instância\n2. Verificar se a URL do webhook está acessível de fora\n3. Verificar os logs do servidor web`;
+                }
+            } catch (e) {
+                result.className = 'result error';
+                result.innerHTML = `✗ Erro ao ler log: ${e.message}`;
+            }
+        }
+
+        carregarConfig();
+    </script>
+</body>
+</html>
