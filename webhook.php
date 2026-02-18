@@ -12,8 +12,15 @@ if (!isset($data['data'])) {
     exit;
 }
 
-$eventData = $data['data'];
 $event = $data['event'] ?? '';
+
+// Ajuste para Evolution API
+if (isset($data['data']['messages'][0])) {
+    $eventData = $data['data']['messages'][0];
+} else {
+    $eventData = $data['data'];
+}
+
 
 $nome = $eventData['pushName'] ?? $eventData['key']['remoteJid'] ?? 'Cliente';
 $telefone = $eventData['key']['remoteJid'] ?? '';
