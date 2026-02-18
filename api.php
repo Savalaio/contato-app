@@ -7,6 +7,8 @@ if ($method === 'GET') {
     $action = $_GET['action'] ?? null;
     if ($action === 'conversas') {
         obterConversas();
+    } elseif ($action === 'check_webhook') {
+        checkWebhook();
     } else {
         echo json_encode(['error' => 'Invalid action']);
     }
@@ -17,6 +19,8 @@ if ($method === 'GET') {
     
     if ($action === 'enviar') {
         enviarMensagem($data);
+    } elseif ($action === 'setup_webhook') {
+        setupWebhook($data);
     } else {
         echo json_encode(['error' => 'Invalid action', 'received_action' => $action]);
     }
@@ -145,4 +149,67 @@ function carregarConfig() {
     }
     
     return json_decode(file_get_contents($arquivo), true);
+}
+
+function checkWebhook() {
+    $config = carregarConfig();
+    
+    if (!$config) {
+        echo json_encode(['error' => 'Configuração não encontrada']);
+        return;
+    }
+    
+    $url = rtrim($config['evolution_url'], '/') . '/webhook/find/' . $config['evolution_instance'];
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['apikey: ' . $config['evolution_apikey']]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    echo json_encode([
+        'status' => $httpCode,
+        'data' => json_decode($response, true)
+    ]);
+}
+
+function setupWebhook($data) {
+    $config = carregarConfig();
+    
+    if (!$config) {
+        echo json_encode(['success' => false, 'error' => 'Configuração não encontrada']);
+        return;
+    }
+    
+    $webhookUrl = $data['webhook_url'] ?? 'https://contato.realizador.com.br/webhook.php';
+    
+    $payload = [
+        'url' => $webhookUrl,
+        'webhook_by_events' => false,
+        'webhook_base64' => false,
+        'events' => ['MESSAGES_UPSERT']
+    ];
+    
+    $url = rtrim($config['evolution_url'], '/') . '/webhook/set/' . $config['evolution_instance'];
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'apikey: ' . $config['evolution_apikey']
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    echo json_encode([
+        'success' => ($httpCode === 200 || $httpCode === 201),
+        'status' => $httpCode,
+        'response' => json_decode($response, true)
+    ]);
 }
