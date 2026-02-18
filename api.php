@@ -85,8 +85,7 @@ function enviarMensagem($data) {
     }
     
     $numero = preg_replace('/[^0-9]/', '', $telefone);
-    if (!strpos($numero, '@')) {
-        $numero = $numero . '@s.whatsapp.net';
+
     }
     
     $payload = [
