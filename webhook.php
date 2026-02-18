@@ -24,6 +24,7 @@ if (isset($data['data']['messages'][0])) {
 
 $nome = $eventData['pushName'] ?? $eventData['key']['remoteJid'] ?? 'Cliente';
 $telefone = $eventData['key']['remoteJid'] ?? '';
+$telefone = str_replace(['@s.whatsapp.net', '@c.us'], '', $telefone);
 $fromMe = $eventData['key']['fromMe'] ?? false;
 
 if ($fromMe) {
