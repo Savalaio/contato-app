@@ -210,3 +210,10 @@ function setupWebhook($data) {
         'response' => json_decode($response, true)
     ]);
 }
+function checkWebhook() {
+    echo json_encode([
+        'success' => true,
+        'message' => 'Webhook ativo',
+        'timestamp' => date('Y-m-d H:i:s')
+    ]);
+}
