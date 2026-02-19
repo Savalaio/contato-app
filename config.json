@@ -1,5 +1,5 @@
 {
-  "evolution_url": "http://evo.realizador.com.br:8080",
-  "evolution_apikey": "20E12095-CE9F-4F16-9FB5-9DD63690E1B7",
+  "evolution_url": "http://evolution-api:8080",
+  "evolution_apikey": "SUA_APIKEY",
   "evolution_instance": "Controle_11"
 }
